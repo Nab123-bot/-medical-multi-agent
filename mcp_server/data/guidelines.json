@@ -1,0 +1,22 @@
+{
+  "general": [
+    "Repos et hydratation adaptée",
+    "Surveillance des symptômes 24-48h",
+    "Consultation si aggravation"
+  ],
+  "respiratoire": [
+    "Repos vocal et hydratation",
+    "Éviter l'exposition au froid ou à la fumée",
+    "Consultation rapide si dyspnée ou fièvre persistante"
+  ],
+  "digestif": [
+    "Alimentation légère fractionnée",
+    "Hydratation par petites quantités",
+    "Consultation si vomissements incoercibles ou sang"
+  ],
+  "urgence": [
+    "Ne pas retarder une consultation d'urgence",
+    "Appeler les services d'urgence selon la gravité locale",
+    "Surveillance continue jusqu'à prise en charge"
+  ]
+}
