@@ -1,27 +1,20 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   getReport,
   startConsultation,
   submitPatientAnswer,
   submitPhysicianReview,
-} from "./api/client";
-
-const STEPS = [
-  "Cas patient",
-  "Questions patient",
-  "Revue médecin",
-  "Rapport final",
-];
-
-const DISCLAIMER =
-  "Exercice pédagogique — ce système ne remplace pas une consultation médicale.";
-
-function stepFromStatus(status) {
-  if (status === "collecting_patient_answers") return 1;
-  if (status === "awaiting_physician_review") return 2;
-  if (status === "completed") return 3;
-  return 0;
-}
+} from "@/api/client";
+import StepIndicator from "@/components/StepIndicator";
+import { API_BASE, DISCLAIMER, STEPS } from "@/constants";
+import FinalReportPage from "@/pages/FinalReportPage";
+import LostConsultationPage from "@/pages/LostConsultationPage";
+import PatientCasePage from "@/pages/PatientCasePage";
+import PatientQuestionsPage from "@/pages/PatientQuestionsPage";
+import PhysicianReviewPage from "@/pages/PhysicianReviewPage";
+import UnexpectedStatePage from "@/pages/UnexpectedStatePage";
+import { stepFromStatus } from "@/utils/consultation";
+import "@/index.css";
 
 export default function App() {
   const [step, setStep] = useState(0);
@@ -32,6 +25,13 @@ export default function App() {
   const [report, setReport] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [apiOk, setApiOk] = useState(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/health`)
+      .then((r) => r.json().then((d) => setApiOk(d?.status === "ok")))
+      .catch(() => setApiOk(false));
+  }, []);
 
   function applyConsultation(data) {
     setConsultation(data);
@@ -117,103 +117,60 @@ export default function App() {
       <h1>Orientation clinique préliminaire</h1>
       <p className="disclaimer">{DISCLAIMER}</p>
 
-      <div className="steps">
-        {STEPS.map((label, i) => (
-          <span
-            key={label}
-            className={`step ${i === step ? "active" : ""} ${i < step ? "done" : ""}`}
-          >
-            {i + 1}. {label}
-          </span>
-        ))}
-      </div>
+      <StepIndicator steps={STEPS} currentStep={step} />
 
       {loading && <p className="loading">Chargement…</p>}
 
+      {apiOk === false && (
+        <p className="error">
+          Backend non accessible ({API_BASE}). Lancez :{" "}
+          <code>cd backend && source .venv/bin/activate && uvicorn app.api:app --port 8000</code>
+        </p>
+      )}
+
       {step === 0 && (
-        <div className="card">
-          <h2>Écran 1 — Cas patient</h2>
-          <label htmlFor="case">Décrivez le cas (symptômes, contexte)</label>
-          <textarea
-            id="case"
-            rows={6}
-            value={patientCase}
-            onChange={(e) => setPatientCase(e.target.value)}
-            placeholder="Ex: Toux sèche depuis 3 jours, fatigue légère, pas de fièvre..."
-          />
-          <button
-            disabled={loading || patientCase.length < 10}
-            onClick={handleStartCase}
-          >
-            Démarrer la consultation
-          </button>
-        </div>
+        <PatientCasePage
+          patientCase={patientCase}
+          onPatientCaseChange={setPatientCase}
+          loading={loading}
+          onStart={handleStartCase}
+        />
+      )}
+
+      {step === 1 && c?.status !== "collecting_patient_answers" && (
+        <UnexpectedStatePage status={c?.status} onReset={reset} />
       )}
 
       {step === 1 && c?.status === "collecting_patient_answers" && (
-        <div className="card">
-          <h2>
-            Écran 2 — Questions patient ({c.question_count + 1}/5)
-          </h2>
-          <p>{c.current_question}</p>
-          <label htmlFor="answer">Votre réponse</label>
-          <input
-            id="answer"
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-            placeholder="Réponse du patient"
-            onKeyDown={(e) => e.key === "Enter" && answer.trim() && handlePatientAnswer()}
-          />
-          <button
-            disabled={loading || !answer.trim()}
-            onClick={handlePatientAnswer}
-          >
-            Envoyer la réponse
-          </button>
-        </div>
+        <PatientQuestionsPage
+          consultation={c}
+          answer={answer}
+          onAnswerChange={setAnswer}
+          loading={loading}
+          onSubmit={handlePatientAnswer}
+        />
       )}
 
       {step === 2 && c?.status === "awaiting_physician_review" && (
-        <div className="card">
-          <h2>Écran 3 — Revue médecin (Human-in-the-loop)</h2>
-          <h3>Synthèse clinique préliminaire</h3>
-          <pre className="report">{c.diagnostic_summary}</pre>
-          <h3>Recommandation intermédiaire</h3>
-          <pre className="report">{c.interim_care}</pre>
-          <label htmlFor="physician">Conduite à tenir / traitement proposé</label>
-          <textarea
-            id="physician"
-            rows={4}
-            value={physicianInput}
-            onChange={(e) => setPhysicianInput(e.target.value)}
-            placeholder="Validation ou ajustement par le médecin traitant"
-          />
-          <button
-            disabled={loading || physicianInput.trim().length < 5}
-            onClick={handlePhysicianReview}
-          >
-            Valider et générer le rapport
-          </button>
-        </div>
+        <PhysicianReviewPage
+          consultation={c}
+          physicianInput={physicianInput}
+          onPhysicianInputChange={setPhysicianInput}
+          loading={loading}
+          onSubmit={handlePhysicianReview}
+        />
       )}
 
       {step === 3 && (
-        <div className="card">
-          <h2>Écran 4 — Rapport final</h2>
-          <pre className="report">{report || c?.final_report}</pre>
-          <button type="button" className="secondary" onClick={reset}>
-            Nouvelle consultation
-          </button>
-        </div>
+        <FinalReportPage
+          report={report}
+          consultation={c}
+          onReset={reset}
+        />
       )}
 
       {step > 0 && step < 3 && !loading && !c && (
-        <div className="card">
-          <p>État de consultation perdu. Recommencez une nouvelle consultation.</p>
-          <button type="button" onClick={reset}>
-            Recommencer
-          </button>
-        </div>
+        <LostConsultationPage onReset={reset} />
       )}
 
       {error && <p className="error">{error}</p>}

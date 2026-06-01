@@ -1,4 +1,6 @@
-const BASE = import.meta.env.VITE_API_BASE || "/api";
+import { API_BASE } from "@/constants";
+
+const BASE = API_BASE;
 
 async function parseError(res) {
   const text = await res.text();

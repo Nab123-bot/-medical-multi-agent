@@ -40,12 +40,10 @@ uvicorn app.api:app --reload --port 8000
 ### Terminal 2 — Frontend
 
 ```bash
-cd /Users/macbookair/Projects/medical-multi-agent/frontend
-npm install
-npm run dev
+bash /Users/macbookair/Projects/medical-multi-agent/scripts/start-frontend.sh
 ```
 
-Ouvrez l’URL affichée par Vite (ex. `http://localhost:5173`).
+Ouvrez **exactement** : **http://127.0.0.1:5173** (avec les deux-points avant le port).
 
 ## En cas de page blanche ou bug
 
