@@ -88,7 +88,7 @@ export default function App() {
       {loading && <div className="loading-bar" />}
 
       {step === 0 && <PatientCasePage patientCase={patientCase} onPatientCaseChange={setPatientCase} loading={loading} onStart={handleStartCase} />}
-      {step === 1 && c?.status === "collecting_patient_answers" && <PatientQuestionsPage consultation={c} answer={answer} onAnswerChange={setAnswer} loading={loading} onSubmit={handlePatier} />}
+      {step === 1 && c?.status === "collecting_patient_answers" && <PatientQuestionsPage consultation={c} answer={answer} onAnswerChange={setAnswer} loading={loading} onSubmit={handlePatientAnswer} />}
       {step === 1 && c?.status !== "collecting_patient_answers" && (
         <div className="card"><p style={{color:"var(--text-secondary)"}}>État inattendu : {c?.status}</p><div className="btn-row"><button className="btn btn-secondary" onClick={reset}>← Recommencer</button></div></div>
       )}
